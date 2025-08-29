@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pneumonia Detection</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Pneumonia Detection</h1>
+        <form id="uploadForm">
+            <input type="file" id="fileInput" accept="image/*" required>
+            <button type="submit">Upload</button>
+        </form>
+
+        <!-- Spinner for loading indication -->
+        <div id="loading" style="display:none;">
+            <p>Processing image, please wait...</p>
+        </div>
+
+        <!-- Result area with prediction outcome -->
+        <div id="result">
+            <p id="prediction">Your result will appear here.</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

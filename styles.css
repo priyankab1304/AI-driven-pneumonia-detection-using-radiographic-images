@@ -1,0 +1,77 @@
+
+body {
+    font-family: 'Roboto', sans-serif; /* Clean modern font */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #e9f1f7; /* Soft light blue background */
+}
+
+/* Main container styling */
+.container {
+    text-align: center;
+    padding: 40px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Softer shadow */
+    max-width: 500px;
+    width: 100%;
+}
+
+/* File input styling */
+input[type="file"] {
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #333; /* Darker color for readability */
+}
+
+/* Button styling */
+button {
+    padding: 15px 30px;
+    border: none;
+    background-color: #007bff; /* Bright blue */
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+/* Button hover effect */
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Loading message styling */
+#loading {
+    color: #ff5722; /* Orange color for emphasis */
+    font-style: italic;
+    font-size: 20px;
+    margin-top: 20px;
+}
+
+/* Result message styling */
+#result {
+    margin-top: 30px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Styling for the prediction text */
+#prediction {
+    font-size: 28px;
+    font-weight: bold;
+    color: #333; /* Neutral dark color for base text */
+}
+
+/* Different color for positive pneumonia detection */
+.prediction-pneumonia {
+    color: #ff0000; /* Red for pneumonia detected */
+}
+
+/* Different color for normal result */
+.prediction-normal {
+    color: #28a745; /* Green for normal result */
+}
