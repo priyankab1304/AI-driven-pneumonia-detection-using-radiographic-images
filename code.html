@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pneumonia Detection – Demo</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --card:#111827;
+      --muted:#94a3b8;
+      --primary:#22c55e;
+      --accent:#38bdf8;
+      --danger:#ef4444;
+      --ring:#334155;
+      --white:#fff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 800px at 10% 10%, #0b1224, var(--bg));
+      color:var(--white);
+      display:grid; place-items:center; padding:24px;
+    }
+    .container{ width:min(920px, 96vw); }
+    .title{ text-align:center; margin:0 0 12px; font-size:clamp(28px,3vw,44px); font-weight:800; background:linear-gradient(90deg,var(--accent),var(--primary)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    .subtitle{ text-align:center; color:var(--muted); margin:0 0 24px; font-size:clamp(14px,2vw,18px)}
+    .card{ background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02)); border:1px solid var(--ring); border-radius:22px; padding:22px; box-shadow:0 10px 35px rgba(0,0,0,0.35); }
+    .upload{ display:grid; gap:18px; grid-template-columns: 1fr 1fr; align-items:start; }
+    @media (max-width: 820px){ .upload{ grid-template-columns:1fr; } }
+    .dropzone{ border:2px dashed var(--ring); border-radius:18px; padding:22px; cursor:pointer; display:grid; place-items:center; text-align:center; transition:.2s ease; min-height:260px; background:rgba(255,255,255,0.02); }
+    .dropzone:hover{ border-color: var(--accent); box-shadow:0 0 0 4px rgba(56,189,248,0.15); }
+    .dropzone.dragover{ border-color:var(--primary); box-shadow:0 0 0 4px rgba(34,197,94,0.15); }
+    .dropzone p{ margin:8px 0; color:var(--muted) }
+    .dropzone input{ display:none }
+    .preview{ border:1px solid var(--ring); border-radius:18px; padding:14px; background:#0b1224; display:flex; gap:16px; align-items:center; min-height:260px; justify-content:center; }
+    .preview img{ max-width:100%; max-height:360px; border-radius:12px; display:none }
+    .preview .empty{ color:var(--muted); }
+    .actions{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:16px }
+    .btn{ appearance:none; border:none; border-radius:999px; padding:12px 18px; font-weight:700; cursor:pointer; transition:.2s ease; font-size:15px; }
+    .btn-primary{ background:linear-gradient(90deg,var(--accent),var(--primary)); color:#00131a }
+    .btn-primary:hover{ filter:brightness(1.05) }
+    .btn-ghost{ background:transparent; color:var(--white); border:1px solid var(--ring) }
+    .btn-ghost:hover{ border-color:var(--accent) }
+    .result{ margin-top:18px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+    .badge{ display:inline-flex; align-items:center; gap:10px; border-radius:999px; padding:10px 16px; font-weight:800; letter-spacing:.3px; font-size:clamp(16px,2.5vw,22px); }
+    .badge.danger{ background:rgba(239,68,68,0.14); border:1px solid rgba(239,68,68,.35); color:#fecaca; }
+    .badge.success{ background:rgba(34,197,94,0.14); border:1px solid rgba(34,197,94,.35); color:#bbf7d0; }
+    .confidence{ color:var(--muted); font-size:14px }
+    .result-img{ margin-top:12px; max-width:260px; border-radius:12px; border:2px solid var(--ring); }
+    footer{ text-align:center; margin-top:18px; color:var(--muted); font-size:12px }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1 class="title">Pneumonia Detection</h1>
+    <p class="subtitle">Upload a chest X‑ray image to check whether Pneumonia is detected or it is Normal.</p>
+
+    <section class="card upload" aria-label="Pneumonia detection uploader">
+      <label class="dropzone" id="dropzone" for="file-input" tabindex="0" role="button">
+        <input id="file-input" type="file" accept="image/*" />
+        <div>
+          <h3>Drag & drop image</h3>
+          <p>or click to choose a file</p>
+        </div>
+      </label>
+
+      <div class="preview" id="preview">
+        <span class="empty">No image selected</span>
+        <img id="preview-img" alt="Uploaded X-ray preview" />
+      </div>
+    </section>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="predict-btn" disabled>Run Prediction</button>
+      <button class="btn btn-ghost" id="reset-btn" disabled>Reset</button>
+    </div>
+
+    <div class="result" id="result" hidden>
+      <span class="badge" id="badge"></span>
+      <div class="confidence" id="confidence"></div>
+      <img id="result-img" class="result-img" alt="Result image" />
+    </div>
+
+    <footer>Demo UI only. Connect to your real model in <code>predict()</code>.</footer>
+  </main>
+<script>
+  const input = document.getElementById('file-input');
+  const previewImg = document.getElementById('preview-img');
+  const predictBtn = document.getElementById('predict-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  const resultEl = document.getElementById('result');
+  const badgeEl = document.getElementById('badge');
+  const confidenceEl = document.getElementById('confidence');
+  const resultImg = document.getElementById('result-img');
+  const preview = document.getElementById('preview');
+
+  input.addEventListener('change', (e)=>{
+    const file = e.target.files?.[0];
+    if(file) handleFile(file);
+  });
+
+  function handleFile(file){
+    if(!file.type.startsWith('image/')){
+      alert('Please upload an image.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      previewImg.src = e.target.result;
+      previewImg.style.display = 'block';
+      preview.querySelector('.empty')?.remove();
+      predictBtn.disabled = false;
+      resetBtn.disabled = false;
+      hideResult();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function hideResult(){ resultEl.hidden = true; }
+
+  predictBtn.addEventListener('click', ()=>predict());
+  resetBtn.addEventListener('click', ()=>{
+    input.value = '';
+    previewImg.src = '';
+    previewImg.style.display = 'none';
+    preview.innerHTML = '<span class="empty">No image selected</span><img id="preview-img" alt="Uploaded X-ray preview" style="display:none" />';
+    predictBtn.disabled = true;
+    resetBtn.disabled = true;
+    hideResult();
+  });
+
+  async function predict(){
+    await new Promise(r=>setTimeout(r,500)); // simulate delay
+
+    // Always classify as either NORMAL or PNEUMONIA
+    const classes = [
+      { label: "PNEUMONIA DETECTED", class: "danger" },
+      { label: "NORMAL", class: "success" }
+    ];
+
+    // Randomly choose one (for demo)
+    const choice = classes[Math.floor(Math.random() * classes.length)];
+    const conf = (Math.random()*0.2 + 0.8); // 80–100%
+
+    badgeEl.textContent = choice.label;
+    badgeEl.className = `badge ${choice.class}`;
+
+    confidenceEl.textContent = `Confidence: ${Math.round(conf*100)}% (demo)`;
+    resultImg.src = previewImg.src;
+    resultEl.hidden = false;
+  }
+</script>
+
+</body>
+</html>
